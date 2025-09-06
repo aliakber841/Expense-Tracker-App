@@ -1,63 +1,84 @@
-import React, { useState } from 'react';
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet,  View , FlatList,Button , } from 'react-native';
-import GoalItem from './components/GoalItem';
-import GoalInput from './components/GoalInput';
+import {StatusBar} from "expo-status-bar"
+import {NavigationContainer} from "@react-navigation/native"
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import {createBottomTabNavigator} from "@react-navigation/bottom-tabs"
+import AllExpenses from './screens/AllExpenses'
+import RecentExpenses from './screens/RecentExpenses'
+import ManageExpense from './screens/ManageExpense'
+import { GlobalStyles } from "./constants/styles";
+import { Ionicons } from '@expo/vector-icons';
+import IconButton from "./components/UI/IconButton";
+import ExpensesContextProvider from "./store/expenses-context";
+const Stack=createNativeStackNavigator()
+const BottomTab=createBottomTabNavigator()
+
+function ExpensesOverview(){
+  return (
+  <BottomTab.Navigator
+ screenOptions={({navigation})=>({
+        headerStyle: { backgroundColor: GlobalStyles.colors.primary500 },
+        headerTintColor: 'white',
+        tabBarStyle: { backgroundColor: GlobalStyles.colors.primary500 },
+        tabBarActiveTintColor: GlobalStyles.colors.accent500,
+        headerRight: ({ tintColor }) => (
+          <IconButton
+            icon="add"
+            size={24}
+            color={tintColor}
+            onPress={() => {
+              navigation.navigate('ManageExpense');
+            }}
+          />
+        ),
+      })} >
+    <BottomTab.Screen name="RecentExpenses"
+     component={RecentExpenses}
+    options={{
+          title: 'Recent Expenses',
+          tabBarLabel: 'Recent',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="hourglass" size={size} color={color} />
+          ),
+        }} />
+    <BottomTab.Screen name="AllExpenses"
+     component={AllExpenses}
+     options={{
+          title: 'All Expenses',
+          tabBarLabel: 'All Expenses',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="calendar" size={size} color={color} />
+          ),
+        }} />
+  </BottomTab.Navigator>
+  )
+}
 
 export default function App() {
-  const [courseGoals,setCourseGoals]=useState([])
-  const [modalIsVisible,setModalIsVisible]=useState(false)
-
-  function startAddGoalHandler(){
-    setModalIsVisible(true)
-  }
-
-  function endAddGoalHandler(){
-    setModalIsVisible(false)
-  }
-  
-  function addGoalHandler(enteredGoalText){
-    setCourseGoals(currentCourseGoals=>
-      [...currentCourseGoals,
-        {text:enteredGoalText,id:Math.random().toString()}])
-        endAddGoalHandler();
-  }
-
-  function deleteGoalHandler(id){
-    setCourseGoals((currentCourseGoals)=>{
-      return currentCourseGoals.filter((goal)=>goal.id!=id)
-    })
-  }
   return (
     <>
-    <StatusBar style='light'/>
-    <View style={styles.appContainer}>
-      <Button title='Add New Goal' color='#5e06ac' 
-      onPress={startAddGoalHandler}/>
-      <GoalInput onAddGoal={addGoalHandler}
-      visible={modalIsVisible}
-       onCancel={endAddGoalHandler}/>
-         <View style={styles.goalsContainer}>
-        <FlatList data={courseGoals} renderItem={(itemData)=>{
-          return <GoalItem text={itemData.item.text} 
-          id={itemData.item.id}
-          onDeleteItem={deleteGoalHandler}/>;
-        }}
-        keyExtractor={(item)=>{
-          return item.id;
-        }}/>
-          </View>
-         </View>
+   <StatusBar style="light" />
+   <ExpensesContextProvider>
+   <NavigationContainer>
+    <Stack.Navigator 
+    screenOptions={{
+            headerStyle: { backgroundColor: GlobalStyles.colors.primary500 },
+            headerTintColor: 'white',
+          }}
+          >
+      <Stack.Screen name="ExpensesOverview" 
+      component={ExpensesOverview}
+      options={{
+        headerShown:false
+      }}/>
+      <Stack.Screen name="ManageExpense"
+       component={ManageExpense}
+       options={{
+              presentation: 'modal',
+            }}
+            />
+    </Stack.Navigator>
+   </NavigationContainer>
+   </ExpensesContextProvider>
          </>
   );
 }
-
-const styles = StyleSheet.create({
-  appContainer:{
-    flex:1,
-    paddingTop:50,
-    paddingHorizontal:16,
-  },goalsContainer:{
-    flex:5
-  },
-});
